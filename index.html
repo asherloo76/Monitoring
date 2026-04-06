@@ -89,7 +89,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 /* --- FEED ITEMS --- */
 .feed{display:flex;flex-direction:column;gap:1px;background:var(--bd)}
 .fi{display:flex;gap:10px;padding:10px 14px;background:var(--s1);border-left:3px solid var(--bd)}
-.fi-m{display:flex;flex-direction:column;gap:3px;min-width:62px;flex-shrink:0}
+.fi-m{display:flex;flex-direction:column;gap:3px;min-width:75px;flex-shrink:0}
 .fi-t{font-family:var(--mono);font-size:10px;color:var(--mut)}
 .fi-tier{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:1px;padding:1px 5px;border-radius:2px;text-transform:uppercase;display:inline-block;width:fit-content}
 .fi-body{font-size:12px;line-height:1.6;color:var(--dim)}
@@ -307,6 +307,19 @@ async function searchClaude(sysPrompt,userMsg,retries=3){
 // --- RENDER ---
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
+function fmtTime(raw){
+  if(!raw||raw==='—') return '—';
+  try{
+    const d=new Date(raw);
+    if(isNaN(d)) return raw;
+    const mon=d.toLocaleDateString('en-US',{month:'short'}).toUpperCase();
+    const day=d.getDate();
+    const hm=d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+    const tz=d.toLocaleTimeString('en-US',{timeZoneName:'short'}).split(' ').pop();
+    return `${mon} ${day}\n${hm} ${tz}`;
+  }catch(e){return raw}
+}
+
 function renderFeed(id,items,empty){
   const el=document.getElementById(id);
   if(!items||!items.length){el.innerHTML=`<div class="fi-empty">${esc(empty)}</div>`;return}
@@ -315,7 +328,7 @@ function renderFeed(id,items,empty){
     const t=TIERS[tk]||TIERS.reported;
     return `<div class="fi" style="border-left-color:${t.color}">
       <div class="fi-m">
-        <span class="fi-t">${esc(it.time||'—')}</span>
+        <span class="fi-t" style="white-space:pre-line">${esc(fmtTime(it.time))}</span>
         <span class="fi-tier" style="background:${t.bg};color:${t.color};border:1px solid ${t.color}50">${t.label}</span>
       </div>
       <div style="flex:1">
@@ -339,7 +352,10 @@ async function doRefresh(){
   btn.disabled=true;btn.textContent='⟳ SCANNING...';
   lb.style.display='flex';eb.style.display='none';
 
-  const BASE=`You are an OSINT war monitor. Today is ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}. The US-Israel war on Iran started Feb 28, 2026. Extract intelligence items from search results as a JSON array. Each item: {"time":"APR 6 14:00","tier":"verified|reported|unverified|rumor|critical","headline":"Short headline","detail":"1-2 sentences","source":"outlet name"}. Most recent first. Output ONLY a valid JSON array. No markdown, no explanation, no preamble. IMPORTANT: Do NOT include any citation tags, cite tags, or XML tags of any kind in your output — just plain text inside JSON strings.`;
+  const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Chicago';
+  const tzLabel=new Date().toLocaleTimeString('en-US',{timeZoneName:'short'}).split(' ').pop();
+
+  const BASE=`You are an OSINT war monitor. Today is ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}. The US-Israel war on Iran started Feb 28, 2026. Extract intelligence items from search results as a JSON array. Each item: {"time":"2026-04-06T14:00:00Z","tier":"verified|reported|unverified|rumor|critical","headline":"Short headline","detail":"1-2 sentences","source":"outlet name"}. CRITICAL: The "time" field MUST be an ISO 8601 UTC timestamp (ending in Z). Convert all times from sources to UTC. If exact time is unknown, estimate based on context (e.g. "this morning" = ~08:00 UTC). Most recent first. Output ONLY a valid JSON array. No markdown, no explanation, no preamble. Do NOT include any citation tags, cite tags, or XML tags — plain text only.`;
 
   try{
     // 1 - Strikes
