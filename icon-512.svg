@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#060608"/>
+  <polygon points="256,80 326,180 326,280 256,330 186,280 186,180" fill="none" stroke="#ff2a2a" stroke-width="16"/>
+  <circle cx="256" cy="220" r="12" fill="#ff2a2a"/>
+  <circle cx="256" cy="220" r="28" fill="none" stroke="#ff2a2a" stroke-width="4" opacity="0.4"/>
+  <text x="256" y="430" text-anchor="middle" font-family="monospace" font-size="64" font-weight="800" fill="#ff2a2a">OSINT</text>
+</svg>
